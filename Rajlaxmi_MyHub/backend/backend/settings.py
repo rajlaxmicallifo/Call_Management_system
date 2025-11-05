@@ -1,5 +1,10 @@
 from pathlib import Path
 import os
+import dj_database_url
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # ===============================================================
 # BASE DIR
@@ -9,15 +14,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ===============================================================
 # SECURITY SETTINGS
 # ===============================================================
-SECRET_KEY = 'django-insecure-s&fzh4!h@a_oy+toc2w#)3$+6ywgjp$#l0%65-d82x1e(8za4)'
-DEBUG = True
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-s&fzh4!h@a_oy+toc2w#)3$+6ywgjp$#l0%65-d82x1e(8za4)')
 
-# ✅ Allow your local network and Flutter device
-#ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.17']
+# DEBUG = True for development, False for production
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-
-
-ALLOWED_HOSTS = ['*']  # For Development only 
+# ✅ Vercel deployment hosts + local development
+ALLOWED_HOSTS = [
+    '.vercel.app',
+    '.now.sh',
+    '127.0.0.1', 
+    'localhost',
+    '192.168.1.17'
+]
 
 # ===============================================================
 # APPLICATIONS
@@ -35,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',  # ✅ Token authentication
     'corsheaders',
+    'whitenoise.runserver_nostatic',  # ✅ For Vercel static files
 
     # Your apps
     'accounts',  # For user auth
@@ -46,10 +56,10 @@ INSTALLED_APPS = [
 # ===============================================================
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # Must be first
-    'django.middleware.common.CommonMiddleware',
-
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ For Vercel
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -79,18 +89,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 # ===============================================================
-# DATABASE (PostgreSQL)
+# DATABASE (Vercel PostgreSQL + Local SQLite)
 # ===============================================================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'myhub_db',
-        'USER': 'myhub_user',
-        'PASSWORD': 'root123',
-        'HOST': 'localhost',
-        'PORT': '5432',
+if os.environ.get('DATABASE_URL'):
+    # Production - Vercel PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=not DEBUG
+        )
     }
-}
+else:
+    # Development - SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ===============================================================
 # PASSWORD VALIDATORS
@@ -111,9 +128,11 @@ USE_I18N = True
 USE_TZ = True
 
 # ===============================================================
-# STATIC FILES
+# STATIC FILES (Vercel Configuration)
 # ===============================================================
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ===============================================================
 # MEDIA FILES (call recordings, uploads)
@@ -127,7 +146,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ===============================================================
-# CORS SETTINGS (allow Flutter mobile app)
+# CORS SETTINGS (allow Flutter mobile app + Vercel)
 # ===============================================================
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
@@ -141,21 +160,57 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://192.168.1.17:8000",
+    "https://your-app.vercel.app",  # Your Flutter web app
+]
 
-# Use your actual Bitrix24 webhook URL
-BITRIX24_WEBHOOK_URL = 'https://world.bitrix24.com/rest/244/8w0b44xg96oamfqt/'
-BITRIX24_DOMAIN = 'world.bitrix24.com'
+# ===============================================================
+# BITRIX24 CONFIGURATION (Environment Variables)
+# ===============================================================
+BITRIX24_WEBHOOK_URL = os.environ.get('BITRIX24_WEBHOOK_URL', 'https://world.bitrix24.com/rest/244/8w0b44xg96oamfqt/')
+BITRIX24_DOMAIN = os.environ.get('BITRIX24_DOMAIN', 'world.bitrix24.com')
 
-# Optional: If you create separate webhooks for different functions
 BITRIX24_WEBHOOKS = {
-    
-    'lead_creation': 'https://world.bitrix24.com/rest/244/8w0b44xg96oamfqt/',
-    #'contact_search': 'https://world.bitrix24.com/rest/244/another-webhook-key/',
-    #'telephony': 'https://world.bitrix24.com/rest/244/yet-another-webhook-key/',
+    'lead_creation': os.environ.get('BITRIX24_WEBHOOK_URL', 'https://world.bitrix24.com/rest/244/8w0b44xg96oamfqt/'),
 }
 
+# ===============================================================
+# REST FRAMEWORK SETTINGS
+# ===============================================================
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
 
-# Configure logging
+# ===============================================================
+# CSRF & SECURITY SETTINGS
+# ===============================================================
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'http://192.168.1.17:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Security settings for production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# ===============================================================
+# LOGGING
+# ===============================================================
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -169,32 +224,3 @@ LOGGING = {
         'level': 'INFO',
     }
 }
-
-
-
-
-# ===============================================================
-# REST FRAMEWORK SETTINGS
-# ===============================================================
-REST_FRAMEWORK = {
-    # ✅ By default, require authentication for all views
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-}
-
-# ===============================================================
-# CSRF EXEMPT URLS (for Flutter APIs)
-# ===============================================================
-CSRF_TRUSTED_ORIGINS = [
-    'http://192.168.1.17:8000',
-    'http://localhost:8000',
-]
-
-# ✅ Important: Override authentication for public endpoints
-# Add this in your accounts/views.py for register/login:
-# @permission_classes([AllowAny])
