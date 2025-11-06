@@ -1,1 +1,17 @@
-.vercel
+# Virtual environment
+venv/
+.env
+
+# Database
+*.sqlite3
+*.db
+
+# Media files
+media/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Large dependencies (if any)
+node_modules/

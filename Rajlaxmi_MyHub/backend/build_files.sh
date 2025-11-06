@@ -1,5 +1,15 @@
-#!/bin/bash
-pip install -r requirements.txt
-python manage.py collectstatic --noinput
-python manage.py makemigrations
-python manage.py migrate
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Rajlaxmi_MyHub/backend/backend/wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "Rajlaxmi_MyHub/backend/backend/wsgi.py"
+    }
+  ]
+}

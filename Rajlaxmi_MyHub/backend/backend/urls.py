@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -147,3 +148,23 @@ urlpatterns = [
 ]
 
 # Remove Django admin from installed apps in settings.py too
+=======
+from django.http import JsonResponse 
+from django.urls import path 
+ 
+def health_check(request): 
+    return JsonResponse({ 
+        "status": "healthy", 
+        "service": "Django API", 
+        "message": "API is working on Vercel!" 
+    }) 
+ 
+def test_endpoint(request): 
+    return JsonResponse({"message": "Test endpoint working!"}) 
+ 
+urlpatterns = [ 
+    path('', health_check), 
+    path('health/', health_check), 
+    path('test/', test_endpoint), 
+] 
+>>>>>>> 8fdd39be4ccc5087c0af57a393f2fb4e858ef6c3

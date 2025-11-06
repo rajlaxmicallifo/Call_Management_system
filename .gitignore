@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 # Flutter
+=======
+# Flutter/Dart
+>>>>>>> 8fdd39be4ccc5087c0af57a393f2fb4e858ef6c3
 .dart_tool/
 .packages
 .pub-cache/
 .pub/
 build/
+<<<<<<< HEAD
 ios/.generated/
 ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
@@ -32,3 +37,13 @@ Thumbs.db
 *.log
 *.pyc
 __pycache__/
+=======
+android/app/build/
+ios/
+*.apk
+*.aab
+
+# Large files
+*.so
+*.dll
+>>>>>>> 8fdd39be4ccc5087c0af57a393f2fb4e858ef6c3
