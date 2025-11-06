@@ -2,26 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/api/**/*.py",
+      "src": "Rajlaxmi_MyHub/backend/api/**/*.py",
       "use": "@vercel/python"
     },
     {
-      "src": "backend/backend/wsgi.py",
+      "src": "Rajlaxmi_MyHub/backend/backend/wsgi.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/api/$1"
-    },
-    {
-      "src": "/admin/(.*)",
-      "dest": "backend/backend/wsgi.py"
+      "dest": "/Rajlaxmi_MyHub/backend/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "backend/backend/wsgi.py"
+      "dest": "Rajlaxmi_MyHub/backend/backend/wsgi.py"
     }
   ]
 }
