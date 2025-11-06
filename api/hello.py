@@ -1,6 +1,6 @@
-def handler(request):
+﻿def handler(request):
     return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': '{"message": "API working without database!"}'
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": "{\"message\": \"API is working!\"}"
     }
