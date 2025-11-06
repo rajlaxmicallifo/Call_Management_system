@@ -1,18 +1,10 @@
 from pathlib import Path
 import os
-import sys
+import dj_database_url
 from dotenv import load_dotenv
-
-# Add this for Vercel path resolution
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load environment variables
 load_dotenv()
-
-print("🚀 Django settings loading...")
-print(f"📁 BASE_DIR: {Path(__file__).resolve().parent.parent}")
-print(f"🔑 DEBUG: {os.environ.get('DEBUG', 'False') == 'True'}")
-print(f"🌐 ALLOWED_HOSTS: {['.vercel.app', '.now.sh', '127.0.0.1', 'localhost', '192.168.1.17']}")
 
 # ===============================================================
 # BASE DIR
@@ -27,9 +19,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-s&fzh4!h@a_oy+toc2w#)
 # DEBUG = True for development, False for production
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Check if we're running on Vercel
-IS_VERCEL = "VERCEL" in os.environ
-
 # ✅ Vercel deployment hosts + local development
 ALLOWED_HOSTS = [
     '.vercel.app',
@@ -40,10 +29,11 @@ ALLOWED_HOSTS = [
 ]
 
 # ===============================================================
-# APPLICATIONS (Django Admin Removed)
+# APPLICATIONS
 # ===============================================================
 INSTALLED_APPS = [
-    # Django core apps (Admin removed)
+    # Default Django apps
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -62,7 +52,7 @@ INSTALLED_APPS = [
 ]
 
 # ===============================================================
-# MIDDLEWARE (Admin middleware removed)
+# MIDDLEWARE
 # ===============================================================
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # Must be first
@@ -81,34 +71,37 @@ MIDDLEWARE = [
 # ===============================================================
 ROOT_URLCONF = 'backend.urls'
 
-# Remove templates since we don't need admin templates
-TEMPLATES = []
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 # ===============================================================
 # DATABASE (Vercel PostgreSQL + Local SQLite)
 # ===============================================================
-if IS_VERCEL or os.environ.get('DATABASE_URL'):
+if os.environ.get('DATABASE_URL'):
     # Production - Vercel PostgreSQL
-    print("🔧 Using PostgreSQL database configuration...")
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE', 'neondb'),
-            'USER': os.environ.get('PGUSER', 'neondb_owner'),
-            'PASSWORD': os.environ.get('PGPASSWORD', 'npg_A5ZJiuz4DUXG'),
-            'HOST': os.environ.get('PGHOST', 'ep-patient-credit-adlzkz3n-pooler.c-2.us-east-1.aws.neon.tech'),
-            'PORT': '5432',
-            'OPTIONS': {
-                'sslmode': 'require',
-            }
-        }
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=not DEBUG
+        )
     }
-    print(f"✅ Database configured: {DATABASES['default']['HOST']}")
 else:
     # Development - SQLite
-    print("🔧 Using SQLite database configuration...")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -135,10 +128,11 @@ USE_I18N = True
 USE_TZ = True
 
 # ===============================================================
-# STATIC FILES (Simplified for Vercel)
+# STATIC FILES (Vercel Configuration)
 # ===============================================================
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ===============================================================
 # MEDIA FILES (call recordings, uploads)
@@ -170,7 +164,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://192.168.1.17:8000",
-    "https://call-management-backend-26upd5vex.vercel.app",  # Your current Vercel app
+    "https://your-app.vercel.app",  # Your Flutter web app
 ]
 
 # ===============================================================
@@ -230,6 +224,3 @@ LOGGING = {
         'level': 'INFO',
     }
 }
-
-print("✅ Django settings loaded successfully!")
-print("🎯 Django admin removed - Using API-only mode")
