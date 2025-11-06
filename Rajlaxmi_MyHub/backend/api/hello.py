@@ -1,5 +1,3 @@
-import json
-
 def handler(request):
     return {
         'statusCode': 200,
@@ -7,9 +5,5 @@ def handler(request):
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps({
-            'message': 'Calls API is working!',
-            'status': 'success',
-            'data': ['call1', 'call2', 'call3']
-        })
+        'body': '{"message": "Hello World! Serverless is working!", "status": "success"}'
     }
