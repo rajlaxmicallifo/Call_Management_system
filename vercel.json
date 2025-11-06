@@ -16,6 +16,10 @@
       "dest": "/backend/api/$1"
     },
     {
+      "src": "/admin/(.*)",
+      "dest": "backend/backend/wsgi.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "backend/backend/wsgi.py"
     }
