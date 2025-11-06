@@ -3,7 +3,7 @@
   import 'package:http/http.dart' as http;
 
   class CallService {
-    final String baseUrl = 'http://192.168.1.17:8000/api/calls/';
+    static const String baseUrl = 'https://call-management-backend-mnoylfu0b.vercel.app';
     String? authToken;
 
     void setToken(String token) {

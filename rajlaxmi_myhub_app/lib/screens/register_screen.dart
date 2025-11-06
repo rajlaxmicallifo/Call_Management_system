@@ -29,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         passwordController.text.trim(),
       );
 
+      // ✅ FIXED: Now registerResult is a String, not a Map
       if (registerResult.toLowerCase().contains("success")) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
