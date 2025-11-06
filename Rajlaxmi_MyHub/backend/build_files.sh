@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e  # Exit on any error
 
 echo "🚀 Starting Django build process on Vercel..."
 
