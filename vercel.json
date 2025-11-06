@@ -4,20 +4,12 @@
     {
       "src": "Rajlaxmi_MyHub/backend/api/**/*.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "Rajlaxmi_MyHub/backend/backend/wsgi.py",
-      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/Rajlaxmi_MyHub/backend/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "Rajlaxmi_MyHub/backend/backend/wsgi.py"
     }
   ]
 }
