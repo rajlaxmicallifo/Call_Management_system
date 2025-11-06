@@ -1,11 +1,14 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-*.sqlite3
-.DS_Store
-.vercel
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+android/app/build/
+ios/
+*.apk
+*.aab
+
+# Large files
+*.so
+*.dll

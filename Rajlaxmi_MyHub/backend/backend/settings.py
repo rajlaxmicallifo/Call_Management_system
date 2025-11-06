@@ -1,8 +1,11 @@
-    from pathlib import Path
-    import os
-    import sys
-    from dotenv import load_dotenv
+from pathlib import Path
+import os
+import sys
+from dotenv import load_dotenv
 
+print("🚀 Django settings loading...")
+
+try:
     # ===============================================================
     # VERCEL PATH FIXES - CRITICAL FOR DEPLOYMENT
     # ===============================================================
@@ -15,9 +18,9 @@
     if str(BASE_DIR) not in sys.path:
         sys.path.append(str(BASE_DIR))
 
-    print("🚀 Django settings loading...")
     print(f"📁 BASE_DIR: {BASE_DIR}")
     print(f"📁 Project Root: {project_root}")
+    print(f"📁 Python Path: {sys.path}")
 
     # Load environment variables
     load_dotenv()
@@ -31,7 +34,7 @@
     DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
     # Check if we're running on Vercel
-    IS_VERCEL = "VERCEL" in os.environ
+    IS_VERCEL = "VERCEL" in os.environ or "VERCEL_ENV" in os.environ
 
     if IS_VERCEL:
         print("🌐 Running on Vercel production environment")
@@ -42,6 +45,7 @@
     ALLOWED_HOSTS = [
         '.vercel.app',
         '.now.sh',
+        '.on.vercel.app',
         '127.0.0.1', 
         'localhost',
         '192.168.1.17',
@@ -52,7 +56,7 @@
     # APPLICATIONS (Django Admin Removed)
     # ===============================================================
     INSTALLED_APPS = [
-        # Django core apps (Admin removed)
+        # Django core apps
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'django.contrib.sessions',
@@ -63,7 +67,7 @@
         'rest_framework',
         'rest_framework.authtoken',  # ✅ Token authentication
         'corsheaders',
-        'whitenoise',  # ✅ Simplified for Vercel
+        'whitenoise',  # ✅ For Vercel static files
 
         # Your apps
         'accounts',  # For user auth
@@ -71,12 +75,12 @@
     ]
 
     # ===============================================================
-    # MIDDLEWARE (Admin middleware removed)
+    # MIDDLEWARE
     # ===============================================================
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',  # Must be first
         'django.middleware.security.SecurityMiddleware',
-        'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ For Vercel - Moved up
+        'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ For Vercel
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
@@ -90,7 +94,7 @@
     # ===============================================================
     ROOT_URLCONF = 'backend.urls'
 
-    # Minimal template configuration (if needed for DRF)
+    # Template configuration
     TEMPLATES = [
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -112,9 +116,17 @@
     # ===============================================================
     # DATABASE (Vercel PostgreSQL + Local SQLite)
     # ===============================================================
-    if IS_VERCEL:
+    # Check for PostgreSQL environment variables first
+    has_postgres_env = all([
+        os.environ.get('PGHOST'),
+        os.environ.get('PGDATABASE'), 
+        os.environ.get('PGUSER'),
+        os.environ.get('PGPASSWORD')
+    ])
+
+    if IS_VERCEL or has_postgres_env:
         # Production - Vercel PostgreSQL
-        print("🔧 Using PostgreSQL database configuration for Vercel...")
+        print("🔧 Using PostgreSQL database configuration...")
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
@@ -122,24 +134,14 @@
                 'USER': os.environ.get('PGUSER', 'neondb_owner'),
                 'PASSWORD': os.environ.get('PGPASSWORD', 'npg_A5ZJiuz4DUXG'),
                 'HOST': os.environ.get('PGHOST', 'ep-patient-credit-adlzkz3n-pooler.c-2.us-east-1.aws.neon.tech'),
-                'PORT': '5432',
+                'PORT': os.environ.get('PGPORT', '5432'),
                 'OPTIONS': {
                     'sslmode': 'require',
-                }
+                },
+                'CONN_MAX_AGE': 600,  # Better for serverless
             }
         }
-        print(f"✅ Database configured: {DATABASES['default']['HOST']}")
-    elif os.environ.get('DATABASE_URL'):
-        # Production with DATABASE_URL
-        import dj_database_url
-        print("🔧 Using DATABASE_URL configuration...")
-        DATABASES = {
-            'default': dj_database_url.config(
-                default=os.environ.get('DATABASE_URL'),
-                conn_max_age=600,
-                ssl_require=True
-            )
-        }
+        print(f"✅ Database configured for: {DATABASES['default']['HOST']}")
     else:
         # Development - SQLite
         print("🔧 Using SQLite database configuration...")
@@ -216,6 +218,7 @@
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://*.vercel.app",
+        "https://*.on.vercel.app",
     ]
 
     # ===============================================================
@@ -233,7 +236,7 @@
     # ===============================================================
     REST_FRAMEWORK = {
         'DEFAULT_PERMISSION_CLASSES': [
-            'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+            'rest_framework.permissions.AllowAny',  # Changed for easier testing
         ],
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'rest_framework.authentication.TokenAuthentication',
@@ -241,6 +244,9 @@
         ],
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer',
+        ],
+        'DEFAULT_PARSER_CLASSES': [
+            'rest_framework.parsers.JSONParser',
         ],
     }
 
@@ -250,6 +256,7 @@
     CSRF_TRUSTED_ORIGINS = [
         'https://*.vercel.app',
         'https://*.now.sh',
+        'https://*.on.vercel.app',
         'http://192.168.1.17:8000',
         'http://localhost:8000',
         'http://127.0.0.1:8000',
@@ -278,22 +285,31 @@
                 'format': '{levelname} {asctime} {module} {message}',
                 'style': '{',
             },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
         },
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
                 'formatter': 'verbose',
-                'stream': sys.stdout,  # Important for Vercel
+                'stream': sys.stdout,
             },
         },
         'root': {
             'handlers': ['console'],
-            'level': 'INFO' if DEBUG else 'WARNING',
+            'level': 'INFO',
         },
         'loggers': {
             'django': {
                 'handlers': ['console'],
                 'level': 'INFO',
+                'propagate': False,
+            },
+            'django.db.backends': {
+                'handlers': ['console'],
+                'level': 'WARNING',  # Reduce database query logs
                 'propagate': False,
             },
         }
@@ -303,16 +319,29 @@
     # VERCEL-SPECIFIC SETTINGS
     # ===============================================================
     if IS_VERCEL:
-        # Ensure WhiteNoise works correctly
+        # WhiteNoise configuration for Vercel
         WHITENOISE_USE_FINDERS = True
         WHITENOISE_MANIFEST_STRICT = False
         WHITENOISE_ALLOW_ALL_ORIGINS = True
+        WHITENOISE_AUTOREFRESH = True
         
-        # Disable Django's built-in static file handling in production
-        DISABLE_COLLECTSTATIC = os.environ.get('DISABLE_COLLECTSTATIC', '0') == '1'
+        # Serverless-specific settings
+        DATABASES['default']['CONN_MAX_AGE'] = 60  # Lower for serverless
+
+    # ===============================================================
+    # APPLICATION SPECIFIC SETTINGS
+    # ===============================================================
+    # Add any custom settings here
 
     print("✅ Django settings loaded successfully!")
     print(f"🔧 Debug mode: {DEBUG}")
     print(f"🌐 Allowed hosts: {ALLOWED_HOSTS}")
     print(f"📁 Static root: {STATIC_ROOT}")
-    print("🎯 Django admin removed - Using API-only mode")
+    print(f"🗄️ Database: {DATABASES['default']['ENGINE']}")
+    print("🎯 Django API-only mode - Ready for Vercel deployment!")
+
+except Exception as e:
+    print(f"❌ ERROR loading Django settings: {e}")
+    import traceback
+    traceback.print_exc()
+    raise
