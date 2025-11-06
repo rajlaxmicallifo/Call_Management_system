@@ -1,19 +1,15 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "Rajlaxmi_MyHub/backend/build_files.sh",
-      "use": "@vercel/build-utils"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "Rajlaxmi_MyHub/backend/staticfiles/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "Rajlaxmi_MyHub/backend/backend/wsgi.py"
-    }
-  ]
-}
+{ 
+  '"version": 2,' 
+  '"builds": [' 
+    '{' 
+      '"src": "Rajlaxmi_MyHub/backend/backend/wsgi.py",' 
+      '"use": "@vercel/python"' 
+    '}' 
+  '],' 
+  '"routes": [' 
+    '{' 
+      '"src": "/(.*)",' 
+      '"dest": "Rajlaxmi_MyHub/backend/backend/wsgi.py"' 
+    '}' 
+  ']' 
+} 
